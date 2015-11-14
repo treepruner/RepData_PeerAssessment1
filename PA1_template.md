@@ -1,17 +1,10 @@
----
-title: "PA1_template"
-author: "treepruner"
-date: "November 2, 2015"
-output: 
-        html_document:
-                keep_md: yes
----
+# PA1_template
+treepruner  
+November 2, 2015  
 
 rm(list = ls())
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 
 #### Overview
@@ -30,7 +23,8 @@ The variables included in this dataset are:
 The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this dataset.
 
 
-```{r load_packages, echo = TRUE, message = FALSE}
+
+```r
 library(dplyr)
 library(ggplot2)
 library(sqldf)
@@ -45,7 +39,8 @@ library(mosaic)
 
 Download, unzip and read in the file.
 
-```{r get_data, echo = TRUE, message = FALSE, warning = FALSE}
+
+```r
 fileURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 download.file(fileURL, "./proj1/repdata%2Fdata%2Factivity.zip", method = "curl")
 unzip(zipfile = "repdata%2Fdata%2Factivity.zip")
@@ -60,17 +55,55 @@ activity <- read.csv("./proj1/activity.csv")
  * look at summaries
  * create exploratory plots
 
-```{r explor_data, echo = TRUE}
+
+```r
 activity_rowCnt <-nrow(activity)
 str(activity)
+```
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
+
+```r
 activity[5000:5005,]
+```
+
+```
+##      steps       date interval
+## 5000   757 2012-10-18      835
+## 5001   608 2012-10-18      840
+## 5002   568 2012-10-18      845
+## 5003   571 2012-10-18      850
+## 5004   355 2012-10-18      855
+## 5005    55 2012-10-18      900
+```
+
+```r
 summary(activity)
 ```
 
+```
+##      steps                date          interval     
+##  Min.   :  0.00   2012-10-01:  288   Min.   :   0.0  
+##  1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8  
+##  Median :  0.00   2012-10-03:  288   Median :1177.5  
+##  Mean   : 37.38   2012-10-04:  288   Mean   :1177.5  
+##  3rd Qu.: 12.00   2012-10-05:  288   3rd Qu.:1766.2  
+##  Max.   :806.00   2012-10-06:  288   Max.   :2355.0  
+##  NA's   :2304     (Other)   :15840
+```
 
-```{r date_steps_plot, echo = TRUE}
+
+
+```r
 plot(activity$date, activity$steps)
 ```
+
+![](PA1_template_files/figure-html/date_steps_plot-1.png) 
 
 
 #### Clean and Preprocess Data
@@ -78,7 +111,8 @@ plot(activity$date, activity$steps)
 The date is currently a factor and needs to be converted to a date. Later in the analysis we need to determine a weekend day from a weekday. Use dplyr and mosaic packages to create a new factor variable to indicate weekend or weekday.
 
 
-```{r date_cleanup, echo = TRUE}
+
+```r
 activity$modDate <- as.Date(activity$date)
 
 weekend <-c("Saturday", "Sunday")
@@ -94,7 +128,8 @@ activity <- mutate(activity,
 
 Create a new dataset with only the completed cases and keep track of the number of rows. 
 
-```{r incomplete_cases, echo = TRUE}
+
+```r
 cc <-activity[complete.cases(activity),]
 cc_rowCnt <- nrow(cc)
 incomplete <- activity_rowCnt - cc_rowCnt
@@ -105,7 +140,8 @@ incomplete <- activity_rowCnt - cc_rowCnt
 
 dplyr is the most understandable and easiest way to do this:
 
-```{r cc_stepsByDate, echo = TRUE }
+
+```r
 stepsByDate <- 
         cc %>% 
         group_by(modDate) %>% 
@@ -115,7 +151,8 @@ stepsByDate <-
 
 ### Histogram of Complete Case Steps by Date
 
-```{r cc_stepsByDate_histogram, echo=TRUE, fig.height = 4.5, fig.width = 4.5}
+
+```r
 hist(stepsByDate$sum_dateSteps,
      xlab = "Steps",
      breaks = 10,
@@ -123,22 +160,26 @@ hist(stepsByDate$sum_dateSteps,
      )
 ```
 
+![](PA1_template_files/figure-html/cc_stepsByDate_histogram-1.png) 
 
-```{r cc_stats, echo = TRUE }
+
+
+```r
 datasetMean <- mean(stepsByDate$sum_dateSteps)
 datasetMedian <- median(stepsByDate$sum_dateSteps)
 ```
 
-The mean of the total number of steps for complete cases taken per day is `r as.character(signif(datasetMean,7))`.
+The mean of the total number of steps for complete cases taken per day is 10766.19.
 
-The median of the total number of steps for complete cases taken per day is `r as.character(signif(datasetMedian,7))`.
+The median of the total number of steps for complete cases taken per day is 10765.
 
 ### What is the average daily activity pattern for complete cases?
 
 Use dplyr to create summaries by 5 minute interval:
 
 
-```{r cc_stepsByInterval, echo = TRUE }
+
+```r
 stepsByInterval <- 
         cc %>% 
         group_by(interval) %>% 
@@ -151,61 +192,72 @@ stepsByInterval <-
 
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r cc_interval_stats, echo = TRUE}
+
+```r
 stepsByInterval[which(stepsByInterval$mean_intervalSteps == max(stepsByInterval$mean_intervalSteps)),]
+```
 
+```
+## Source: local data frame [1 x 4]
+## 
+##   interval n_interval sum_intervalSteps mean_intervalSteps
+## 1      835         53             10927           206.1698
+```
+
+```r
 maxInterval <- stepsByInterval[which(stepsByInterval$mean_intervalSteps == max(stepsByInterval$mean_intervalSteps)),1]
-
 ```
 
 
-```{r cc_interval_plot, echo = TRUE, fig.height=4.5, fig.width = 4.5 }
+
+```r
 plot(stepsByInterval$interval, stepsByInterval$mean_intervalSteps,
     type = "l",
     ylab = "Mean Steps",
     xlab = "Interval",
     main = "Time Series of Complete Cases")
     abline(v = maxInterval, col = "red")
-    
-
 ```
+
+![](PA1_template_files/figure-html/cc_interval_plot-1.png) 
 
 
 ### Impute Missing Values
 
-The original dataset had `r activity_rowCnt` rows. 
-The data set after removing the incomplete cases had `r cc_rowCnt` rows.
+The original dataset had 17568 rows. 
+The data set after removing the incomplete cases had 15264 rows.
 
-This is a difference of `r incomplete` records
+This is a difference of 2304 records
 
 The NA records in the original data set have been defaulted to use the mean for the particular 5 minute interval and saved as the data frame activityImputed. The package sqldf was used to join to the interval summary dataframe.
 
 
 
-```{r impute, echo = TRUE, message = FALSE }
+
+```r
 activityImputed1 <- sqldf( 
         "select a.*, i.mean_intervalSteps, i.sum_intervalSteps    
         from activity a join stepsByInterval i on a.interval = i.interval")
 
 activityImputed2 <- sqldf(c("update activityImputed1 set steps = mean_intervalSteps where steps  is null", "select * from main.activityImputed1"))
-
 ```
 
 
 #### Summarize the Imputed File
 
-```{r imputedStepsByDate, echo = TRUE }
+
+```r
 imputedStepsByDate <- 
         activityImputed2 %>% 
         group_by(modDate) %>% 
         summarise(n_date = n(), sum_dateSteps = sum(steps) , mean_dateSteps = mean(steps))
-
 ```
 
 
 Make a histogram of the steps by day including the imputed values
 
-```{r imputedStepsByDate_histogram, echo=TRUE, fig.height = 4.5, fig.width = 4.5}
+
+```r
 hist(imputedStepsByDate$sum_dateSteps,
      xlab = "Steps",
      breaks = 10,
@@ -213,9 +265,12 @@ hist(imputedStepsByDate$sum_dateSteps,
      )
 ```
 
+![](PA1_template_files/figure-html/imputedStepsByDate_histogram-1.png) 
 
 
-```{r imputedStepsByDate_stats, echo = TRUE }
+
+
+```r
 imputedDatasetMean <- mean(imputedStepsByDate$sum_dateSteps)
 imputedDatasetMedian <- median(imputedStepsByDate$sum_dateSteps)
 
@@ -223,13 +278,13 @@ mean_diff <- datasetMean - imputedDatasetMean
 median_diff <- datasetMedian - imputedDatasetMedian
 ```
 
-The mean of the total number of steps   taken per day is `r as.character(signif(imputedDatasetMean,7))` after imputation.
+The mean of the total number of steps   taken per day is 10749.77 after imputation.
 
-The median of the total number of steps  taken per day is `r as.character(signif(imputedDatasetMedian,7))` after imputation.
+The median of the total number of steps  taken per day is 10641 after imputation.
 
-The mean changed by `r as.character(signif(mean_diff,7))`
+The mean changed by 16.41819
 
-The median changed by `r as.character(signif(median_diff,7))`
+The median changed by 124
 
 
 ### Are there differences in activity patterns between weekdays and weekends?
@@ -238,12 +293,12 @@ Yes!
 
 Use dplyr to summarize the data by the new variable dayType and calculate the means.
 
-```{r imputedStepsByDayType, echo = TRUE }
+
+```r
 imputedStepsByDayType <- 
         activityImputed2 %>% 
         group_by(interval,dayType) %>% 
         summarise(n_date = n(), sum_dayTypeSteps = sum(steps) , mean_dayTypeSteps = mean(steps))
-
 ```
 
 
@@ -252,8 +307,8 @@ imputedStepsByDayType <-
 ### Panel Plot of Avg Steps Taken by Day Type
 
 
-```{r imputed_dayType_plot, echo = TRUE, fig.height = 4, fig.width = 8 }
 
+```r
 g <- ggplot(imputedStepsByDayType, aes(x = interval, y = mean_dayTypeSteps, color = dayType))
 g <- g + geom_line()
 g <- g + facet_grid(. ~ dayType)
@@ -263,8 +318,9 @@ g <- g + theme(legend.position = "bottom")
 g <- g +  geom_line(stat = "hline", yintercept = "max", color = "black")
 g <- g +  geom_line(stat = "hline", yintercept = "mean", color = "black", linetype = 2 )
 g 
-
 ```
+
+![](PA1_template_files/figure-html/imputed_dayType_plot-1.png) 
 
 The solid black line indicates the maximum value. The dashed black line indicates the average.  
 
